@@ -93,10 +93,10 @@ def parse_aqi_csv(text: bytes):
     return results
 
 
-AQMDFile = namedtuple('AQMDFile', ['table', 'is_current', 'last_updated', 'valid_timestamp'])
+SCAQMDFile = namedtuple('SCAQMDFile', ['table', 'is_current', 'last_updated', 'valid_timestamp'])
 
 
-class AQMDCache(MutableMapping):
+class SCAQMDCache(MutableMapping):
     """Singleton object to cache requests to the OpenGIS API.
     """
     def __init__(self):
@@ -125,7 +125,7 @@ class AQMDCache(MutableMapping):
         else:
             timestamp = first['date']
 
-        self._cache[key] = AQMDFile(
+        self._cache[key] = SCAQMDFile(
             table,
             is_current,
             time.time(),
@@ -141,34 +141,34 @@ class AQMDCache(MutableMapping):
         return len(self._cache)
 
 
-class AQMDSensor(Entity):
-    """Read air quality information from AQMD website.
+class SCAQMDSensor(Entity):
+    """Read air quality information from SCAQMD website.
     """
     ICON = 'mdi:cloud-outline'
 
-    def __init__(self, url, station_id, timeout=3600, aqmd_cache=None):
+    def __init__(self, url, station_id, timeout=3600, scaqmd_cache=None):
         """Initialize the sensor"""
         self._url = url
         self._station_id = int(station_id)
-        self._aqmd_cache = aqmd_cache if aqmd_cache else AQMDCache()
+        self._scaqmd_cache = scaqmd_cache if scaqmd_cache else SCAQMDCache()
         self._previous_aqi = None
         self._previous_category = None
         self._timeout = timeout
 
     @property
     def station(self):
-        aqmddata = self._aqmd_cache[self._url]
-        return aqmddata.table.get(self._station_id)
+        scaqmddata = self._scaqmd_cache[self._url]
+        return scaqmddata.table.get(self._station_id)
 
     @property
     def is_current(self):
-        aqmddata = self._aqmd_cache[self._url]
-        return aqmddata.is_current
+        scaqmddata = self._scaqmd_cache[self._url]
+        return scaqmddata.is_current
 
     @property
     def state_attributes(self):
         attributes = {
-            ATTR_ATTRIBUTION: 'SCAQMD Open Data',
+            ATTR_ATTRIBUTION: 'SCSCAQMD Open Data',
             ATTR_NAME: self.name,
             ATTR_DATE: time.time(),
             ATTR_AQI: self.station['aqi'],
@@ -205,8 +205,8 @@ class AQMDSensor(Entity):
 
     @property
     def next_update(self):
-        aqmddata = self._aqmd_cache[self._url]
-        t = aqmddata.valid_timestamp
+        scaqmddata = self._scaqmd_cache[self._url]
+        t = scaqmddata.valid_timestamp
         if self.is_current:
             # updated hourly with data from each station
             return datetime(t.year, t.month, t.day, t.hour + 1, tzinfo=pytz.utc)
@@ -238,7 +238,7 @@ class AQMDSensor(Entity):
                 self._previous_category = category
 
 
-aqmd_cache_singleton = AQMDCache()
+scaqmd_cache_singleton = SCAQMDCache()
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
@@ -247,12 +247,12 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     current_url = config.get(CONF_CURRENT_URL, DEFAULT_CURRENT_URL)
     forecast_url = config.get(CONF_FORECAST_URL, DEFAULT_FORECAST_URL)
 
-    _LOGGER.info("AQMD platform station: %s", str(station))
+    _LOGGER.info("SCAQMD platform station: %s", str(station))
     if mode == 'current':
         url = current_url
     else:
         url = forecast_url
-    device = AQMDSensor(url, station, aqmd_cache=aqmd_cache_singleton)
+    device = SCAQMDSensor(url, station, scaqmd_cache=scaqmd_cache_singleton)
     add_devices([device], True)
 
     return True
@@ -264,7 +264,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('station_id', type=int)
     args = parser.parse_args()
-    sensor = AQMDSensor(DEFAULT_CURRENT_URL, args.station_id)
+    sensor = SCAQMDSensor(DEFAULT_CURRENT_URL, args.station_id)
     print(sensor.name)
     print("Date :", sensor.date.astimezone(tzlocal()))
     print("State:", sensor.state)
