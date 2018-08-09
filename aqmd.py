@@ -1,9 +1,16 @@
-from collections import OrderedDict
-from collections.abc import Mapping
+from collections import namedtuple
+from collections.abc import MutableMapping
 import csv
+from datetime import timedelta
+from homeassistant.const import (
+    ATTR_ATTRIBUTION,
+    ATTR_NAME,
+    ATTR_DATE,
+)
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
+from homeassistant.util import Throttle
 import logging
 import requests
 import time
@@ -13,39 +20,34 @@ _LOGGER = logging.getLogger(__name__)
 
 #REQUIREMENTS = ['dateutil==2.5.3']
 
-DOMAIN = 'aqmd_sensor'
-
-SCAQMD_CURRENT_CSV = 'https://opendata.arcgis.com/datasets/d50c7062e9024c68b22bd4f15710a7f6_0.csv'
-SCAQMD_TOMORROW_CSV = 'https://opendata.arcgis.com/datasets/67b86d6bc8414fb6b977df2ed6e1e171_0.csv'
+ATTR_AQI = 'aqi'
+ATTR_CURRENT_TIME = 'datetime'
+ATTR_CATEGORY = 'category'
+ATTR_POLLUTANT = 'pollutant'
+ATTR_URL = 'link'
 
 CONF_STATION = 'station'
-CONF_FORECAST = 'forecast'
+CONF_MODE = 'mode'
+CONF_CURRENT_URL = 'current_url'
+CONF_FORECAST_URL = 'forecast_url'
+
+MODES = ['current', 'forecast']
+
+DEFAULT_MODE = 'current'
+DEFAULT_CURRENT_URL = 'https://opendata.arcgis.com/datasets/d50c7062e9024c68b22bd4f15710a7f6_0.csv'
+DEFAULT_FORECAST_URL = 'https://opendata.arcgis.com/datasets/67b86d6bc8414fb6b977df2ed6e1e171_0.csv'
+
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=10)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional('CONF_STATION'): cv.positive_int,
-    vol.Optional('CONF_FORECAST'): cv.positive_int,
+    vol.Required(CONF_STATION): cv.string,
+    vol.Optional(CONF_MODE, default=DEFAULT_MODE): vol.All(vol.In(MODES)),
+    vol.Optional(CONF_CURRENT_URL, default=DEFAULT_CURRENT_URL): cv.url,
+    vol.Optional(CONF_FORECAST_URL, default=DEFAULT_FORECAST_URL): cv.url,
 })
 
-CURRENT_LABELS = ['sra', 'name', 'aqi', 'current_datetime',
-                  'category_desc', 'pollutant_desc', 'link']
-FORECAST_LABELS = ['sra', 'name', 'aqi', 'date', 'category_desc', 'pollutant_desc']
 
-def setup_platform(hass, config, add_devices, discovery_info=None):
-    devices = []
-    _LOGGER.info("config: %s", str(config))
-    if 'station' in config['aqmd']:
-        #station = config['aqmd']['station']
-        station = 8
-        aqmd_current = AQMDCache(SCAQMD_CURRENT_CSV, True)
-        devices.append(AQMDSensor(hass, aqmd_current, station, True))
-    if 'forecast' in config['aqmd']:
-        #station = config['aqmd']['forecast']
-        station = 8
-        aqmd_forecast = AQMDCache(SCAQMD_TOMORROW_CSV, False)
-        devices.append(AQMDSensor(aqmd_forecast, station, False))
-    add_devices(devices, True)
-
-def parse_aqi_csv(text, labels):
+def parse_aqi_csv(text: bytes):
     """Parse air quality csv into a dictionary of values.
 
     the first key is the station ID, the second keys are the
@@ -53,131 +55,185 @@ def parse_aqi_csv(text, labels):
     """
     from dateutil.parser import parse
 
-    data = csv.reader(text.split('\n'))
-    header = next(data)
-    columns = OrderedDict()
-    for label in labels:
-        columns[label] = header.index(label)
+    data = csv.reader(text.decode('utf-8-sig').strip().split('\n'))
+    columns = next(data)
 
     results = {}
     for row in data:
         if len(row) > 0:
             parsed_row = {}
-            for label in columns:
-                if label in ('date', 'current_datetime'):
-                    parsed_row[label] = parse(row[columns[label]])
-                elif label in ('aqi', 'sra'):
-                    parsed_row[label] = int(row[columns[label]])
+            for name, value in zip(columns, row):
+                if name in ('date', 'current_datetime'):
+                    parsed_row[name] = parse(value)
+                elif name in ('aqi', 'sra'):
+                    parsed_row[name] = int(value)
+                elif name in ('Shape__Area', 'Shape__Length'):
+                    # skip geo polygon
+                    pass
                 else:
-                    parsed_row[label] = row[columns[label]]
+                    parsed_row[name] = value
             results[parsed_row['sra']] = parsed_row
     return results
 
 
-class AQMDCache(Mapping):
+AQMDFile = namedtuple('AQMDFile', ['table', 'is_current', 'last_updated', 'timestamp'])
+
+
+class AQMDCache(MutableMapping):
     """Singleton object to cache requests to the OpenGIS API.
     """
-    def __init__(self, url, is_current):
-        self.url = url
-        if is_current:
-            self.labels = CURRENT_LABELS
-            self.suffix = "Current Air Quality"
-        else:
-            self.labels = FORECAST_LABELS
-            self.suffix = "Tomorrows Forecast Air Quality"
-        self._current = None
-        self.last_update = 0
+    def __init__(self):
+        self._cache = {}
 
-    def update_aqi(self):
+    def _update_aqi(self, url: str):
         """Update current information
 
         Website says its usually about 30 minutes after the hour
         """
-        response = requests.get(self.url)
-        self.current = parse_aqi_csv(response.text, self.labels)
-        return self.current
+        response = requests.get(url)
+        self[url] = response.content
 
-    @property
-    def current(self):
-        if self._current is None:
-            self.update_aqi()
-        return self._current
-
-    @current.setter
-    def current(self, value):
-        self.last_update = time.time()
-        self._current = value
-    
     def __getitem__(self, key):
-        return self.current[key]
+        if key not in self._cache:
+            self._update_aqi(key)
+
+        return self._cache[key]
+
+    def __setitem__(self, key, value):
+        table = parse_aqi_csv(value)
+        first = table[next(iter(table.keys()))]
+        is_current = 'current_datetime' in first
+        if is_current:
+            timestamp = first['current_datetime']
+        else:
+            timestamp = first['date']
+
+        self._cache[key] = AQMDFile(
+            table,
+            is_current,
+            time.time(),
+            timestamp)
+
+    def __delitem__(self, key):
+        del self._cache[key]
 
     def __iter__(self):
-        return iter(self.current)
+        return iter(self._cache)
 
     def __len__(self):
-        return len(self.current)
+        return len(self._cache)
 
 
 class AQMDSensor(Entity):
     """Read air quality information from AQMD website.
     """
-    def __init__(self, aqmd_cache, station_id, timeout=3600):
+    ICON = 'mdi:cloud-outline'
+
+    def __init__(self, url, station_id, timeout=3600, aqmd_cache=None):
         """Initialize the sensor"""
-        self.aqmd_cache = aqmd_cache
+        self._url = url
+        self._station_id = int(station_id)
+        self._aqmd_cache = aqmd_cache if aqmd_cache else AQMDCache()
         self._previous_aqi = None
         self._previous_category = None
-        self.station_id = station_id
-        self.timeout = timeout
+        self._timeout = timeout
 
     @property
-    def aqi(self):
-        return self.aqmd_cache[self.station_id]['aqi']
+    def station(self):
+        aqmddata = self._aqmd_cache[self._url]
+        return aqmddata.table.get(self._station_id)
 
     @property
-    def category(self):
-        return self.aqmd_cache[self.station_id]['current_desc']
+    def is_current(self):
+        aqmddata = self._aqmd_cache[self._url]
+        return aqmddata.is_current
 
     @property
-    def pollutant(self):
-        return self.aqmd_cache[self.station_id]['pollutant_desc']
+    def state_attributes(self):
+        attributes = {
+            ATTR_ATTRIBUTION: 'SCAQMD Open Data',
+            ATTR_NAME: self.name,
+            ATTR_DATE: time.time(),
+            ATTR_AQI: self.station['aqi'],
+            ATTR_CATEGORY: self.station['category_desc'],
+            ATTR_POLLUTANT: self.station['pollutant_desc'],
+        }
+        #if self.is_current:
+        #    attributes[ATTR_URL] = self.link
+        return attributes
+
+    @property
+    def icon(self):
+        return self.ICON
 
     @property
     def name(self):
         """Return the name of this sensor"""
-        location_name = self.aqmd_cache[self.station_id]['name']
-        return location_name + ' ' + self.aqmd_cache.suffix
+        if self.is_current:
+            suffix = "Current Air Quality"
+        else:
+            suffix = "Tomorrows Forecast Air Quality"
+        location_name = self.station.get('name', 'Undefined')
+        return location_name + ' ' + suffix
 
     @property
     def state(self):
         """Return the state of the sensor"""
-        return self.aqi
+        return self.station['aqi']
 
+    @property
     def unit_of_measurement(self):
-        """Return the unit of measurement
+        """Return the unit of measurement of this entity, if any."""
+        return 'AQI'
 
-        air quality indicator is untyped.
-        """
-        return self.category
-
+    @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Fetch new state data for the sensor
         """
-        if time.time() > self.aqmd_cache.last_update + self.timeout:
-            self.aqmd_cache.update()
+        #if time.time() > self.last_updated + self.timeout:
+        aqi = self.station['aqi']
+        category = self.station['category_desc']
 
-            if self.aqi != self._previous_aqi:
-                self.hass.bus.fire('aqi_changed', {
-                    'previous_aqi': self._previous_aqi,
-                    'aqi': self.aqi})
-            if self.category != self._previous_category:
-                self.hass.bus.fire('category_changed', {
-                    'previous_category': self._previous_category,
-                    'category': self.category})
-            self._previous_aqi = self.aqi
-            self._previous_category = self.category
+        if aqi != self._previous_aqi:
+            self.hass.bus.fire('aqi_changed', {
+                'previous_aqi': self._previous_aqi,
+                'aqi': aqi})
+            self._previous_aqi = aqi
+
+        if category != self._previous_category:
+            self.hass.bus.fire('category_changed', {
+                'previous_category': self._previous_category,
+                'category': category})
+            self._previous_category = category
+
+
+aqmd_cache_singleton = AQMDCache()
+
+
+def setup_platform(hass, config, add_devices, discovery_info=None):
+    station = config.get(CONF_STATION)
+    mode = config.get(CONF_MODE, 'current')
+    current_url = config.get(CONF_CURRENT_URL, DEFAULT_CURRENT_URL)
+    forecast_url = config.get(CONF_FORECAST_URL, DEFAULT_FORECAST_URL)
+
+    _LOGGER.info("AQMD platform station: %s", str(station))
+    if mode == 'current':
+        url = current_url
+    else:
+        url = forecast_url
+    device = AQMDSensor(url, station, aqmd_cache=aqmd_cache_singleton)
+    add_devices([device], True)
+
+    return True
 
 
 if __name__ == '__main__':
-    sensor = AQMDSensor(aqmd_current, 8)
+    from argparse import ArgumentParser
+    from dateutil.tz import tzlocal
+    parser = ArgumentParser()
+    parser.add_argument('station_id', type=int)
+    args = parser.parse_args()
+    sensor = AQMDSensor(DEFAULT_CURRENT_URL, args.station_id)
     print(sensor.name)
-    print(sensor.state)
+    print("Date :", sensor.date.astimezone(tzlocal()))
+    print("State:", sensor.state)
