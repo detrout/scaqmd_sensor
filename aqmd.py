@@ -93,7 +93,7 @@ def parse_aqi_csv(text: bytes):
     return results
 
 
-AQMDFile = namedtuple('AQMDFile', ['table', 'is_current', 'last_updated', 'timestamp'])
+AQMDFile = namedtuple('AQMDFile', ['table', 'is_current', 'last_updated', 'valid_timestamp'])
 
 
 class AQMDCache(MutableMapping):
@@ -203,25 +203,39 @@ class AQMDSensor(Entity):
         """Return the unit of measurement of this entity, if any."""
         return 'AQI'
 
+    @property
+    def next_update(self):
+        aqmddata = self._aqmd_cache[self._url]
+        t = aqmddata.valid_timestamp
+        if self.is_current:
+            # updated hourly with data from each station
+            return datetime(t.year, t.month, t.day, t.hour + 1, tzinfo=pytz.utc)
+        else:
+            # available daily at about noon
+            value = datetime(t.year, t.month, t.day, 12, 0)
+            value = DEFAULT_TIMEZONE.localize(value)
+            value = value.astimezone(pytz.utc)
+            return value
+
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Fetch new state data for the sensor
         """
-        #if time.time() > self.last_updated + self.timeout:
-        aqi = self.station['aqi']
-        category = self.station['category_desc']
+        if datetime.now() > self.next_update():
+            aqi = self.station['aqi']
+            category = self.station['category_desc']
 
-        if aqi != self._previous_aqi:
-            self.hass.bus.fire('aqi_changed', {
-                'previous_aqi': self._previous_aqi,
-                'aqi': aqi})
-            self._previous_aqi = aqi
+            if aqi != self._previous_aqi:
+                self.hass.bus.fire('aqi_changed', {
+                    'previous_aqi': self._previous_aqi,
+                    'aqi': aqi})
+                self._previous_aqi = aqi
 
-        if category != self._previous_category:
-            self.hass.bus.fire('category_changed', {
-                'previous_category': self._previous_category,
-                'category': category})
-            self._previous_category = category
+            if category != self._previous_category:
+                self.hass.bus.fire('category_changed', {
+                    'previous_category': self._previous_category,
+                    'category': category})
+                self._previous_category = category
 
 
 aqmd_cache_singleton = AQMDCache()
