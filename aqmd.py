@@ -1,3 +1,13 @@
+"""Sensor to interact with SCAQMD Air quality open data
+(South Coast Air Quality Management District)
+
+See https://data-scaqmd-online.opendata.arcgis.com/ for more information
+
+SCAQMD Hourly forecast is updated on the hour.
+SCAQMD Forecast is available daily at about noon
+"""
+
+
 from collections import namedtuple
 from collections.abc import MutableMapping
 import csv
