@@ -11,7 +11,7 @@ SCAQMD Forecast is available daily at about noon
 from collections import namedtuple
 from collections.abc import MutableMapping
 import csv
-from datetime import timedelta
+from datetime import datetime, timedelta
 from homeassistant.const import (
     ATTR_ATTRIBUTION,
     ATTR_NAME,
@@ -25,6 +25,7 @@ import logging
 import requests
 import time
 import voluptuous as vol
+import pytz
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,6 +48,8 @@ DEFAULT_MODE = 'current'
 DEFAULT_CURRENT_URL = 'https://opendata.arcgis.com/datasets/d50c7062e9024c68b22bd4f15710a7f6_0.csv'
 DEFAULT_FORECAST_URL = 'https://opendata.arcgis.com/datasets/67b86d6bc8414fb6b977df2ed6e1e171_0.csv'
 
+DEFAULT_TIMEZONE = pytz.timezone('America/Los_Angeles')
+
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=10)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
@@ -63,8 +66,6 @@ def parse_aqi_csv(text: bytes):
     the first key is the station ID, the second keys are the
     data values for that station.
     """
-    from dateutil.parser import parse
-
     data = csv.reader(text.decode('utf-8-sig').strip().split('\n'))
     columns = next(data)
 
@@ -73,8 +74,14 @@ def parse_aqi_csv(text: bytes):
         if len(row) > 0:
             parsed_row = {}
             for name, value in zip(columns, row):
-                if name in ('date', 'current_datetime'):
-                    parsed_row[name] = parse(value)
+                if name == 'current_datetime':
+                    value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+                    value = value.replace(tzinfo=pytz.utc)
+                    parsed_row[name] = value
+                elif name == 'date':
+                    value = datetime.strptime(value, '%m/%d/%Y')
+                    value = DEFAULT_TIMEZONE.localize(value)
+                    parsed_row[name] = value
                 elif name in ('aqi', 'sra'):
                     parsed_row[name] = int(value)
                 elif name in ('Shape__Area', 'Shape__Length'):

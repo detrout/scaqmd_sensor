@@ -1,6 +1,7 @@
-import datetime
+from datetime import datetime, date
 import time
 from unittest import TestCase
+import pytz
 
 import aqmd
 
@@ -21,7 +22,9 @@ class TestAQMDSensor(TestCase):
                 self.assertIn(label, current)
 
             self.assertIsInstance(current['current_datetime'],
-                                  datetime.datetime)
+                                  datetime)
+            self.assertEqual(current['current_datetime'],
+                             datetime(2018, 6, 24, 21, 0, 0, tzinfo=pytz.utc))
 
     def test_parse_aqi_csv_forecast(self):
         with open('Tomorrows_Forecast_Feature.csv', 'rb') as stream:
@@ -33,7 +36,13 @@ class TestAQMDSensor(TestCase):
                 self.assertIn(label, current)
 
             self.assertIsInstance(current['date'],
-                                  datetime.date)
+                                  date)
+            # date in the file is in America/Los_Angeles
+            expected_date = datetime(2018, 6, 25, 0, 0, 0)
+            expected_date = aqmd.DEFAULT_TIMEZONE.localize(expected_date)
+            # Now convert that to UTC, so we only store things in one timezone.
+            expected_date = expected_date.astimezone(pytz.utc)
+            self.assertEqual(current['date'], expected_date)
 
     def test_aqmd_cache_current(self):
         with open('Current_Air_Quality_Feature.csv', 'rb') as stream:
