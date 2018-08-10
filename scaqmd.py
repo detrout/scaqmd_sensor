@@ -170,7 +170,7 @@ class SCAQMDSensor(Entity):
         attributes = {
             ATTR_ATTRIBUTION: 'SCSCAQMD Open Data',
             ATTR_NAME: self.name,
-            ATTR_DATE: time.time(),
+            ATTR_DATE: self.valid_timestamp,
             ATTR_AQI: self.station['aqi'],
             ATTR_CATEGORY: self.station['category_desc'],
             ATTR_POLLUTANT: self.station['pollutant_desc'],
