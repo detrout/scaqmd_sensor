@@ -21,6 +21,7 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import Throttle
+from homeassistant.util import dt
 import logging
 import requests
 import time
@@ -75,9 +76,7 @@ def parse_aqi_csv(text: bytes):
             parsed_row = {}
             for name, value in zip(columns, row):
                 if name == 'current_datetime':
-                    value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
-                    value = value.replace(tzinfo=pytz.utc)
-                    parsed_row[name] = value
+                    parsed_row[name] = dt.parse_datetime(value)
                 elif name == 'date':
                     value = datetime.strptime(value, '%m/%d/%Y')
                     value = DEFAULT_TIMEZONE.localize(value)
