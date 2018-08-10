@@ -143,9 +143,8 @@ class SCAQMDSensor(Entity):
     """
     ICON = 'mdi:cloud-outline'
 
-    def __init__(self, hass, url, station_id, timeout=3600, scaqmd_cache=None):
+    def __init__(self, url, station_id, timeout=3600, scaqmd_cache=None):
         """Initialize the sensor"""
-        self._hass = hass
         self._url = url
         self._station_id = int(station_id)
         self._scaqmd_cache = scaqmd_cache if scaqmd_cache else SCAQMDCache()
@@ -241,7 +240,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         url = current_url
     else:
         url = forecast_url
-    device = SCAQMDSensor(hass, url, station, scaqmd_cache=scaqmd_cache_singleton)
+    device = SCAQMDSensor(url, station, scaqmd_cache=scaqmd_cache_singleton)
     add_devices([device], True)
 
     return True
