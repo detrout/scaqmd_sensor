@@ -163,7 +163,7 @@ class SCAQMDSensor(Entity):
         return scaqmddata.is_current
 
     @property
-    def state_attributes(self):
+    def device_state_attributes(self):
         attributes = {
             ATTR_ATTRIBUTION: 'SCSCAQMD Open Data',
             ATTR_NAME: self.name,
