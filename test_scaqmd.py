@@ -1,6 +1,7 @@
 from datetime import datetime, date
 import time
 from unittest import TestCase
+from unittest.mock import patch
 import pytz
 
 import scaqmd
@@ -97,3 +98,20 @@ class TestSCAQMDSensor(TestCase):
         # Now convert that to UTC, so we only store things in one timezone.
         expected_date = expected_date.astimezone(pytz.utc)
         self.assertEqual(sensor.next_update, expected_date)
+
+    def test_update(self):
+        with open('Current_Air_Quality_Feature.csv', 'rb') as stream:
+            data = stream.read()
+            now = datetime.now().strftime('%Y-%m-%dT%H:00:00.000Z').encode('ascii')
+            current_data = data.replace(b'2018-06-24T21:00:00.000Z', now)
+
+        with patch.object(scaqmd.SCAQMDCache, '_update_aqi', return_value=None) as _update_aqi:
+            scaqmd_cache = scaqmd.SCAQMDCache()
+            scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = data
+            sensor = scaqmd.SCAQMDSensor(self.hass, scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
+            sensor.update()
+            _update_aqi.assert_called_with(scaqmd.DEFAULT_CURRENT_URL)
+            scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = current_data
+            _update_aqi.reset_mock()
+            sensor.update()
+            _update_aqi.assert_not_called()

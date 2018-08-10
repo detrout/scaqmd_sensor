@@ -221,21 +221,12 @@ class SCAQMDSensor(Entity):
     def update(self):
         """Fetch new state data for the sensor
         """
-        if datetime.now() > self.next_update():
-            aqi = self.station['aqi']
-            category = self.station['category_desc']
+        if datetime.now(pytz.utc) > self.next_update:
+            self._scaqmd_cache._update_aqi(self._url)
 
-            if aqi != self._previous_aqi:
-                self.hass.bus.fire('aqi_changed', {
-                    'previous_aqi': self._previous_aqi,
-                    'aqi': aqi})
-                self._previous_aqi = aqi
-
-            if category != self._previous_category:
-                self.hass.bus.fire('category_changed', {
-                    'previous_category': self._previous_category,
-                    'category': category})
-                self._previous_category = category
+    @property
+    def valid_timestamp(self):
+        return self._scaqmd_cache[self._url].valid_timestamp
 
 
 scaqmd_cache_singleton = SCAQMDCache()
