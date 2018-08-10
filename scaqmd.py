@@ -30,8 +30,6 @@ import pytz
 
 _LOGGER = logging.getLogger(__name__)
 
-#REQUIREMENTS = ['dateutil==2.5.3']
-
 ATTR_AQI = 'aqi'
 ATTR_CURRENT_TIME = 'datetime'
 ATTR_CATEGORY = 'category'
