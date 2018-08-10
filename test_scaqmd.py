@@ -13,6 +13,9 @@ EXPECTED_FORECAST_LABELS = [
 
 
 class TestSCAQMDSensor(TestCase):
+    def setUp(self):
+        self.hass = None
+
     def test_parse_aqi_csv_current(self):
         with open('Current_Air_Quality_Feature.csv', 'rb') as stream:
             data = stream.read()
@@ -73,7 +76,7 @@ class TestSCAQMDSensor(TestCase):
             data = stream.read()
         scaqmd_cache = scaqmd.SCAQMDCache()
         scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = data
-        sensor = scaqmd.SCAQMDSensor(scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
+        sensor = scaqmd.SCAQMDSensor(self.hass, scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
 
         self.assertEqual(sensor.name, "Southwest Coastal LA County Current Air Quality")
         self.assertEqual(sensor.state, 33)
@@ -84,7 +87,7 @@ class TestSCAQMDSensor(TestCase):
             data = stream.read()
         scaqmd_cache = scaqmd.SCAQMDCache()
         scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = data
-        sensor = scaqmd.SCAQMDSensor(scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
+        sensor = scaqmd.SCAQMDSensor(self.hass, scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
 
         self.assertEqual(sensor.name, "Southwest Coastal LA County Tomorrows Forecast Air Quality")
         self.assertEqual(sensor.state, 48)
