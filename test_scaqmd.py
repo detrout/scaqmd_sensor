@@ -68,7 +68,6 @@ class TestSCAQMDSensor(TestCase):
         timestamp = time.time()
         scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = data
         record = scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL]
-        print(record.table.keys())
         self.assertIn(3, record.table)
         self.assertEquals(record.is_current, True)
         self.assertGreaterEqual(record.last_updated, timestamp)
