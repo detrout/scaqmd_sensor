@@ -86,6 +86,11 @@ class TestSCAQMDSensor(TestCase):
     def test_scaqmd_sensor_current(self):
         with open('Current_Air_Quality_Feature.csv', 'rb') as stream:
             data = stream.read()
+        table = scaqmd.parse_aqi_csv(data)
+        self.assertEqual(table[1]['current_datetime'],
+                         datetime(2018, 6, 24, 22, 0, tzinfo=pytz.utc))
+        self.assertEqual(table[2]['current_datetime'],
+                         datetime(2018, 6, 24, 21, 0, tzinfo=pytz.utc))
         scaqmd_cache = scaqmd.SCAQMDCache()
         scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = data
         sensor = scaqmd.SCAQMDSensor(scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
