@@ -138,7 +138,10 @@ class TestSCAQMDSensor(TestCase):
         with open('Current_Air_Quality_Feature.csv', 'rb') as stream:
             data = stream.read()
             before_tomorrow = b'2018-06-24T23:00:00.000Z'
+            tomorrow = b'2018-06-25T00:00:00.000Z'
             current_data = data.replace(b'2018-06-24T21:00:00.000Z', before_tomorrow)
+            current_data = current_data.replace(b'2018-06-24T22:00:00.000Z', tomorrow)
+            self.assertNotEquals(data, current_data)
 
         with patch.object(scaqmd.SCAQMDCache, '_update_aqi', return_value=None) as _update_aqi:
             scaqmd_cache = scaqmd.SCAQMDCache()
