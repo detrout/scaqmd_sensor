@@ -133,15 +133,16 @@ class SCAQMDCache(MutableMapping):
         first = table[next(iter(table.keys()))]
         is_current = 'current_datetime' in first
         if is_current:
-            timestamp = first['current_datetime']
+            timestamp_name = 'current_datetime'
         else:
-            timestamp = first['date']
+            timestamp_name = 'date'
+        valid_timestamp = min([x[timestamp_name] for x in table.values()])
 
         self._cache[key] = SCAQMDFile(
             table,
             is_current,
             time.time(),
-            timestamp)
+            valid_timestamp)
 
     def __delitem__(self, key):
         del self._cache[key]
