@@ -94,6 +94,8 @@ class TestSCAQMDSensor(TestCase):
         scaqmd_cache = scaqmd.SCAQMDCache()
         scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = data
         sensor = scaqmd.SCAQMDSensor(scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
+        self.assertEqual(scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL].valid_timestamp,
+                         datetime(2018, 6, 24, 21, 0, tzinfo=pytz.utc))
 
         self.assertEqual(sensor.name, "Southwest Coastal LA County Current Air Quality")
         self.assertEqual(sensor.state, 33)
@@ -141,6 +143,8 @@ class TestSCAQMDSensor(TestCase):
         with patch.object(scaqmd.SCAQMDCache, '_update_aqi', return_value=None) as _update_aqi:
             scaqmd_cache = scaqmd.SCAQMDCache()
             scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = current_data
+            self.assertEquals(scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL].valid_timestamp,
+                              datetime(2018, 6, 24, 23, 0, tzinfo=pytz.utc))
             sensor = scaqmd.SCAQMDSensor(scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
             self.assertEquals(sensor.valid_timestamp, datetime(2018, 6, 24, 23, tzinfo=pytz.utc))
             self.assertEquals(sensor.next_update,  datetime(2018, 6, 25, 0, tzinfo=pytz.utc))
