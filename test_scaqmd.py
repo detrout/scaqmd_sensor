@@ -151,3 +151,21 @@ class TestSCAQMDSensor(TestCase):
             sensor = scaqmd.SCAQMDSensor(scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
             self.assertEquals(sensor.valid_timestamp, datetime(2018, 6, 24, 23, tzinfo=pytz.utc))
             self.assertEquals(sensor.next_update,  datetime(2018, 6, 25, 0, tzinfo=pytz.utc))
+
+    def test_update_new_month(self):
+        with open('Current_Air_Quality_Feature.csv', 'rb') as stream:
+            data = stream.read()
+            before_tomorrow = b'2018-08-31T23:00:00.000Z'
+            tomorrow = b'2018-09-01T00:00:00.000Z'
+            current_data = data.replace(b'2018-06-24T21:00:00.000Z', before_tomorrow)
+            current_data = current_data.replace(b'2018-06-24T22:00:00.000Z', tomorrow)
+            self.assertNotEquals(data, current_data)
+
+        with patch.object(scaqmd.SCAQMDCache, '_update_aqi', return_value=None) as _update_aqi:
+            scaqmd_cache = scaqmd.SCAQMDCache()
+            scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL] = current_data
+            self.assertEquals(scaqmd_cache[scaqmd.DEFAULT_CURRENT_URL].valid_timestamp,
+                              datetime(2018, 8, 31, 23, 0, tzinfo=pytz.utc))
+            sensor = scaqmd.SCAQMDSensor(scaqmd.DEFAULT_CURRENT_URL, 3, scaqmd_cache=scaqmd_cache)
+            self.assertEquals(sensor.valid_timestamp, datetime(2018, 8, 31, 23, tzinfo=pytz.utc))
+            self.assertEquals(sensor.next_update,  datetime(2018, 9, 1, 0, tzinfo=pytz.utc))

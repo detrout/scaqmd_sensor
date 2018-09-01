@@ -222,12 +222,7 @@ class SCAQMDSensor(Entity):
         t = scaqmddata.valid_timestamp
         if self.is_current:
             # updated hourly with data from each station
-            next_day = t.day
-            next_hour = t.hour + 1
-            if next_hour > 23:
-                next_hour = 0
-                next_day = next_day + 1
-            return datetime(t.year, t.month, next_day, next_hour, tzinfo=pytz.utc)
+            return t + timedelta(seconds=3600)
         else:
             # available daily at about noon
             value = datetime(t.year, t.month, t.day, 12, 0)
