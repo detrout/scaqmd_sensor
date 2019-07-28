@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <base href="/aqdetail/" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="SCAQMD - AQ Details" />
+    <link rel="shortcut icon" href="/aqdetail/Content/Images/favicon.ico">
+    <title>AQ Details - Current Air Quality</title>
+     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="/aqdetail/Content/css/all?v=jxpjI3TWh4lLZRbyMHPZXDnkPaqb7WhEG-p3gscGIQs1" rel="stylesheet"/>
+
+    <script src="/aqdetail/bundles/modernizr?v=byG8dOZWsVDn1dZ9Dz1vs9imzMfHoSev0enqgT4Wvhw1"></script>
+
+    <script src="/aqdetail/bundles/jquery?v=FDpMrmVU3Kv9w7URJvnxL9SNwC-lb7FKiWC8CPbWlBM1"></script>
+
+    <script src="/aqdetail/bundles/jqueryui?v=1Msi7eMVX-uQg5vL-8Ace_KCT1e24uiRpxOlMsKHlTE1"></script>
+
+    <script src="/aqdetail/bundles/jqueryval?v=Lq4oooWL3BxqdAuZkI4H3VRvp4o5cBIyLQ0Nw8_pnh41"></script>
+
+
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+    <div class="navbar navbar-custom  navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <div class="visible-sm visible-xs">
+                    <div>
+                        <div id="mobilemenu" class="pull-right btn-group dropdown">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                            <ul class="dropdown-menu pull-right">
+                                         <li>
+    <a href="/aqdetail/AirQuality">Current Air Quality</a>
+</li>
+
+<li>
+    <a href="/aqdetail/AirQuality/MonitoredData">Current Monitor Data</a>
+</li>
+<li>
+    <a href="/aqdetail/AirQuality/YesterdayData">Yesterday&#39;s Data</a>
+</li>
+<li>
+    <a href="/aqdetail/AirQuality/DailyHighs">Daily High</a>
+</li>
+<li>
+    <a href="/aqdetail/AirQuality/HistoricalData">Historical Data</a>
+</li>
+
+								
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <a class="navbar-brand pull-left p0" id="aqmd-logo" href="http://www.aqmd.gov" title="South Coast AQMD">
+                    <div class="visible-xs visible-sm hidden-md">
+                        <div id="aqmdlogo"></div>
+                    </div>
+
+                    <div class="visible-desktop hidden-sm hidden-xs">
+                        <div class="logo-wrapper">
+                            <div id="logo"></div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="navbar-collapse collapse" id="navbar-menu">
+                <ul id="topnav">
+                    <li>
+                        <a href="http://www.aqmd.gov"><i class="fa fa-home f18 ml10"></i></a>
+                    </li>
+                    <li>
+    <a href="/aqdetail/AirQuality">Current Air Quality</a>
+</li>
+
+<li>
+    <a href="/aqdetail/AirQuality/MonitoredData">Current Monitor Data</a>
+</li>
+<li>
+    <a href="/aqdetail/AirQuality/YesterdayData">Yesterday&#39;s Data</a>
+</li>
+<li>
+    <a href="/aqdetail/AirQuality/DailyHighs">Daily High</a>
+</li>
+<li>
+    <a href="/aqdetail/AirQuality/HistoricalData">Historical Data</a>
+</li>
+
+								
+
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="bg-darkgray  text-blue pt40 pb5 fixed">
+        <div class="container">
+            <h1 class="stepHeader">
+             AQ Details - Current Air Quality
+                <span class="pull-right smallText">
+                    <span id="showtooltip" class="btn btn-default show-tooltip hidden-xs btn-sm" title="Turn on tooltip">Show Tooltip</span>
+                    <span id="hidetooltip" class="btn btn-default hide-tooltip hidden-xs btn-sm" title="Turn off tooltip">Hide Tooltip</span>
+                    <span id="showtooltip-xs" class="btn visible-xs text-black" title="Turn   on tooltip" data-placement="left"><i class="glyphicon glyphicon-comment"></i></span>
+                    <span id="hidetooltip-xs" class="btn visible-xs" title="Turn   off tooltip" data-placement="left"><i class="glyphicon glyphicon-comment"></i></span>
+                </span>
+            </h1>
+        </div>
+    </div>
+
+
+    <div id="mainbody" class="bg-gray">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 col-main">
+                   
+                   
+                    
+
+
+ <div class="panel panel-default p10 clearfix">
+<div class="pl15 pb10">
+ 
+      <span class="pull-right col-md-3">
+        <span class="inline pull-left"> <i class="fa fa-info-circle text-blue" title="Information Guide"></i></span>
+        <span class="col-md-11 col-xs-11">
+             <select id="infoMenu" class="form-control bg-mintcream">
+             <option value="-1" >--- Select an Information Guide ---</option>
+              <option value="Index" >Air Quality Index Explained</option>
+              <option value="Polluntants" >Polluntants Explained</option>
+              <option value="Disclaimer" >Disclaimer</option>
+  
+            </select> 
+        </span>
+    </span>
+   <div id="pollutantModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h1 class="modal-title">Pollutants Explained</h1>
+      </div>
+      <div class="modal-body">
+        <p ><b>Carbon monoxide</b>&nbsp;(CO) is a colorless, odorless gas that is formed when carbon in fuel is not burned completely. Sources include motor vehicle exhaust, industrial processes such as metals processing and chemical manufacturing, residential wood burning, and natural sources such as forest fires.</p>
+<p ><b>Nitrogen oxides</b>&nbsp;(NOx) is the generic term for a group of highly reactive gases, all of which contain nitrogen and oxygen in varying amounts. Many of the nitrogen oxides are colorless and odorless. However, one common pollutant, nitrogen dioxide (NO2) along with particles in the air can often be seen as a reddish-brown layer over many urban areas.</p>
+        <p ><b>Ozone</b>&nbsp;(O3) is a gas created by a chemical reaction between oxides of nitrogen (NOx) and volatile organic compounds (VOCs) in the presence of sunlight. Motor vehicle exhaust and industrial emissions, gasoline vapors, and chemical solvents as well as natural sources emit NOx and VOCs that help form ozone. Ground-level ozone is the primary constituent of smog.</p>
+      <p ><b>Sulfur dioxide</b>&nbsp;(SO2) belongs to the family of sulfur oxide gases (SOx). SOx gases are formed when fuel containing sulfur, such as coal and oil, is burned, and when gasoline is extracted from oil, or metals are extracted from ore. SO2 dissolves in water vapor to form acid, and interacts with other gases and particles in the air to form sulfates and other products that can be harmful to people and their environment.</p>
+        <p ><b>Particulate Matter 10</b>&nbsp;(PM10) or "inhalable coarse particles," or “particle pollution” are smaller than 10 micrometers in diameter. Typically found near roadways and dusty industries. PM10 is made up of a number of components, including acids (such as nitrates and sulfates), organic chemicals, metals, and soil or dust particles. Once inhaled, these particles can affect the heart and lungs and cause serious health effects.</p>
+          <p ><b>Particulate Matter 2.5</b>&nbsp;(PM2.5) or "fine particles," are 2.5 micrometers in diameter and smaller. Often found in smoke and haze, these particles can be directly emitted from sources such as forest fires, or they can form when gases emitted from power plants, industries and automobiles react in the air.</p>
+          <h3>Mapping of current air quality data</h3>
+          <p>Air quality forecasts for the South Coast Air Quality Management District are prepared for nearly 40 source/receptor areas, or forecast areas. These forecast areas are displayed on the current air quality map. Most of these areas have one or more air monitoring stations that measure air pollutants and meteorological data. The real-time measurement of five criteria pollutants factor into the current Air Quality Index (AQI) reading. This monitoring equipment is distributed among the permanent air monitoring stations, as follows: </p>
+          <ul>
+              <li>30 stations measure ozone; </li>
+               <li>26 stations measure carbon monoxide (CO); </li>
+               <li>25 stations measure nitrogen dioxide (NO2); </li>
+               <li>11 stations measure real-time PM10; </li>
+               <li>9 stations measure real-time PM2.5. </li>
+          </ul>
+          <p>The sites selected for the equipment are chosen based on how well the location represents local air quality, local emission sources and transport issues, the relative severity of the problem from the predominant pollutant in the area, and financial factors, such as the cost of equipment, maintenance and support staff. For areas where a particular criteria pollutant is not monitored, the closest station or a combination of surrounding stations are mapped to that area. These substitute stations are known as proxy stations. The use of proxies allows the closest available monitoring data to be applied to forecast areas that otherwise do not have monitoring equipment for a specific criteria pollutant.</p>
+
+          <h3>Explanation of standards</h3>
+          <div class="hidden-md visible-xs">Scroll the table to the left to see more data.</div>
+            <div  class="data-table-container container-fluid table-responsive">  
+          <table border="0" cellpadding="0" cellspacing="10" width="100%" class="table table-striped  table-bordered table-hover border">
+              <tbody><tr><td >
+              <p ><b>Pollutants</b></p></td>
+              <td >
+                  <p><b>Description</b></p></td>
+                  <td ><p><b>Averaging Period</b></p></td>
+                  <td ><p><b>State Standard</b></p></td>
+                  <td ><p><b>Federal Standard</b></p></td></tr>
+                  <tr><td ><p>CO</p></td>
+                     <td ><p>Carbon Monoxide</p></td>
+                      <td ><p>1 Hr</p></td><td ><p>20 ppm</p></td>
+                      <td ><p>35 ppm</p></td></tr><tr>
+                          <td ><p>CO</p></td>
+                          <td ><p>Carbon Monoxide</p></td>
+                          <td ><p>8 Hr</p></td>
+                          <td ><p>9 ppm</p></td><td ><p>9 ppm</p></td></tr>
+                  <tr><td ><p>O3</p></td><td ><p>Ozone</p></td>
+                      <td ><p>1 Hr</p></td><td ><p>0.09 ppm</p></td>
+                      <td ><p>N/A</p></td></tr><tr><td ><p>O3</p></td><td ><p>Ozone</p></td>
+                          <td ><p>8 Hr</p></td><td ><p>0.07 ppm</p></td><td ><p>0.075 ppm</p></td></tr>
+                  <tr><td ><p>NO2</p></td><td ><p>Nitrogen Dioxide</p></td><td ><p>1 Hr</p></td>
+                      <td ><p>0.18 ppm</p></td><td ><p>N/A</p></td></tr><tr><td ><p>SO2</p></td>
+                          <td ><p>Sulphur Dioxide</p></td><td ><p>1 Hr</p></td><td ><p>0.25 ppm</p></td>
+                          <td ><p>N/A</p></td></tr><tr><td ><p>SO2</p></td><td ><p>Sulphur Dioxide</p></td><td ><p>24 Hr</p></td><td ><p>0.04 ppm</p></td><td ><p>0.14 ppm</p></td></tr><tr><td ><p>PM10</p></td><td ><p>Particulate Matter 10</p></td><td ><p>1 Hr</p></td><td ><p>N/A</p></td><td ><p>N/A</p></td></tr><tr><td ><p>PM10</p></td><td ><p>Particulate Matter 10</p></td><td ><p>24 Hr</p></td><td ><p>50 µg/m3</p></td><td ><p>150 µg/m3</p></td></tr><tr><td ><p>PM2.5</p></td><td ><p>Fine Particulate Matter</p></td><td ><p>1 Hr</p></td><td ><p>N/A</p></td><td ><p>N/A</p></td></tr><tr><td ><p>PM2.5</p></td><td ><p>Fine Particulate Matter</p></td><td ><p>24 Hr</p></td><td ><p>N/A</p></td><td ><p>35 µg/m3</p>
+                </td></tr>
+
+              </tbody></table>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+   <div id="IndexModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h1 class="modal-title">Air Quality Index Explained</h1>
+      </div>
+      <div class="modal-body">
+          <h3>Introduction</h3>
+        <p>The Air Quality Index (AQI) is an index for reporting daily air quality. It tells you how clean or polluted your air is, and what
+             associated health effects might be a concern for you.&nbsp;<br>
+            <br>The AQI focuses on health effects you may experience within a few hours or days after breathing polluted air. 
+            Environmental Protection Agency (EPA) calculates the AQI for five major air pollutants regulated by the Clean Air Act:&nbsp;<br>
+            <br>
+            1. Ground-level Ozone (O3)&nbsp;<br>
+            2. Particle Pollution, also known as particulate matter (PM10 and PM2.5)&nbsp;<br>
+            3. Carbon Monoxide (CO)&nbsp;<br>4. Sulfur Dioxide (SO2) and&nbsp;<br>5. Nitrogen Dioxide (NO2).&nbsp;<br>
+            <br>For each of these pollutants, EPA has established national air quality standards to protect public health.
+             Ground-level ozone and airborne particles are the two pollutants that pose the greatest threat to human health in this country.</p>
+          <p><b>Note:</b>&nbsp;As an area with severe challenges to meeting federal Clean Air Act standards by their mandated deadlines, 
+              the state of California has established standards that are more stringent than federal standards for certain pollutants,
+               including Ozone (O3) and Nitrogen Dioxide (NO2). Both state and federal standards are shown in the data tables that
+               accompany the air quality map.</p>
+          <h3>How does AQI work?</h3>
+          <p>Think of the AQI as a yardstick that runs from 0 to 500. The higher the AQI value, 
+              the greater the level of air pollution and the greater the health concern.&nbsp;<br>
+              <br>For example, an AQI value of 50 represents good air quality with little potential 
+              to affect public health, while an AQI value over 300 represents hazardous air quality.&nbsp;<br>
+              <br>An AQI value of 100 generally corresponds to the national air quality standard for the 
+              pollutant, which is the level EPA has set to protect public health.&nbsp;
+              <br><br>
+              AQI values below 100 are generally thought of as satisfactory. When AQI values reach above 100,
+               air quality is considered to be unhealthy for certain sensitive groups of people. The higher the AQI values 
+              climb above 100, increasingly more people may become susceptible to the effects of the unhealthy air.”</p>
+          <h3>Understanding the AQI range</h3>
+          <p>The purpose of the AQI is to help you understand what local air quality means to your health.
+               To make it easier to understand, the AQI is divided into six categories. Each category corresponds to 
+              a different level of health concern. There are six levels of health concern.</p>
+    
+              <p ><b>Good :</b>&nbsp;
+                  The AQI value for your community is between 0 and 50. Air quality is considered satisfactory,
+                   and air pollution poses little or no risk.</p>
+
+             
+                       <p >
+                           <b>Moderate:&nbsp;</b>
+                           The AQI for your community is between 51 and 100. Air quality is acceptable; however, 
+                           for some pollutants there may be a moderate health concern for a very small number of people. 
+                           For example, people who are unusually sensitive to ozone may experience respiratory symptoms.</p>
+          <p >
+                  <b>Unhealthy for Sensitive Groups:&nbsp;</b>When AQI values are between 101 and 150, members of 
+                  sensitive groups may experience health effects. This means they are likely to be affected at lower levels 
+                  than the general public. For example, people with lung disease are at greater risk from exposure to ozone, 
+                  while people with either lung disease or heart disease are at greater risk from exposure to particle pollution. 
+                  The general public is not likely to be affected when the AQI is in this range.</p>
+              <p >
+                  <b>Unhealthy:&nbsp;</b>
+                  Everyone may begin to experience health effects when AQI values are between 151 and 200. Members 
+                  of sensitive groups may experience more serious health effects.</p>
+
+             
+                      <p ><b>Very Unhealthy:&nbsp;</b>
+                          Values between 201 and 300 trigger a health alert, meaning everyone may experience serious health effects.</p>
+
+                    
+              <p >
+                  <b>Hazardous:&nbsp;</b>
+                  Values over 300 trigger health warnings of emergency conditions. The entire population is more likely to be affected.</p>
+
+                
+          <h3>
+                 Understanding the AQI color code</h3>
+          <p >EPA has assigned a specific color to each AQI category to make it easier for people to understand quickly whether air 
+              pollution is reaching unhealthy levels in their communities.</p>
+          <div>
+              <img src="/aqdetail/Content/images/indextable.png" />
+          </div>
+
+      
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+  <div id="DisclaimerModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h1 class="modal-title">Disclaimer</h1>
+      </div>
+      <div class="modal-body">
+         
+             <h3>Air Quality Map Help</h3>
+            <p>Data is shown on the map for the areas within the South Coast Air Quality Management District only-- 
+                all of Orange County, and major portions of Los Angeles, Riverside and San Bernardino counties in Southern California.
+                 For air quality information on areas outside of this district, but still in California visit the
+                <a href="http://www.capcoa.org/" target="_blank">
+                  California Air Pollution Control Officer's Association</a>
+               Web site or the
+               <a href="http://www.arb.ca.gov/homepage.htm" target="_blank">
+                  California Air Resources Board </a>
+                Web site. For areas outside of California, visit the&nbsp;
+                <a href="http://www.epa.gov/" target="_blank">U.S Environmental Protection Agency</a>
+                Web site.&nbsp;</p>
+        <p>Double-click on an area in the map to zoom in, or use your mouse scroll-wheel to zoom in or out on the map.</p>
+          
+           <p>Enter a full address, partial address or place name in the text box next to the "Search" button (ESRI World Geocoder), and then click "Search" to go to that location.</p>
+              <h4>When searching follow these rules:</h4>
+              <p><b>A full address:</b> To ensure the best possible match, include as much of the address as you can.
+                   Use commas to separate lines in the address.</p>
+             <p><b>A partial address:</b>  To ensure the best possible match, include as much of the address as possible.
+                  To search for an intersection, use &amp; between the street names.</p>
+              <p>A place or neighborhood name: To ensure the best possible match, include as much of the name as you can.</p>
+             <p>Click on an area to see a popup that displays the area number and name, the AQI category and value, identifies the pollutant associated with the AQI value, the date and time of the reading, and provides a link to more detailed measurement data.</p>
+              
+            <p>Best viewed with Internet Explorer 7 or greater.&nbsp;</p>
+           <p>When viewed with Internet Explorer (IE) versions earlier than version 7, the pop-up window with details about 
+               the current air quality for the selected SRA displays for only a short time. You can freeze the pop-up window 
+               to allow you to view the detailed information and to click on the link to the hourly data by moving your cursor
+                continuously in the pop-up window.</p>
+
+       </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/aqdetail/Scripts/infoDropdown.js"></script>
+       
+ 
+</div>
+    <div>
+     
+<form action="/aqdetail/AirQuality" method="post">        <div class="col-md-4 col-sm-6 col-xs-12">
+
+            <div id="searchstation" class="mt10 mb10">
+             Select a Station
+            <div class="dropdownlist">
+             <select name="stationDropDownList" id=""  onchange="this.form.submit()"  class="form-control">  
+                  <option value="70075">Pomona/Walnut Valley 1</option>
+                  <option value="70088">West San Gabriel Valley</option>
+                  <option value="33158">Lake Elsinore Area</option>
+                  <option value="36204">East San Bernardino Valley</option>
+                  <option value="70074">West San Fernando Valley</option>
+                  <option value="70087">Central Los Angeles</option>
+                  <option value="36197">Central San Bernardino Valley 1</option>
+                  <option value="70060">East San Gabriel Valley 1</option>
+                  <option value="33137">Coachella Valley 1</option>
+                  <option value="70069">East San Fernando Valley</option>
+                  <option value="30177">North Orange County</option>
+                  <option value="70072">South Coastal L.A. County</option>
+                  <option value="70091">Northwest Coastal L.A. County</option>
+                  <option value="30195">North Coastal Orange County</option>
+                  <option value="70094">Southwest Coastal L.A. County</option>
+                  <option value="70591">East San Gabriel Valley 2</option>
+                  <option value="36203">Central San Bernardino Valley 2</option>
+                  <option value="33146">Metropolitan Riverside Area 2</option>
+                  <option value="36212">Norco/Corona</option>
+                  <option value="30812">Saddleback Valley</option>
+                  <option value="33157">Coachella Valley 2</option>
+                  <option value="33144">Metropolitan Riverside Area 1</option>
+                  <option value="36175">Northwest San Bernardino Valley</option>
+                  <option value="70090">Santa Clarita Valley</option>
+                  <option value="30176">Central Orange County</option>
+                  <option value="36181">Central San Bernardino Mountains 1</option>
+                  <option value="36213">Central San Bernardino Mountains 2</option>
+                  <option value="33149">Perris Valley</option>
+                  <option value="33164">San Gorgonio Pass</option>
+                  <option value="70084">South Central L.A. County</option>
+                  <option value="70085">South San Gabriel Valley</option>
+			 </select>
+                 </div>
+                
+       
+             <div class="col-md-3">
+              
+              
+                    </div>
+                </div><!--searchstation end-->
+        </div>
+</form>        <div class="col-md-1">
+        </div>
+         <div class="col-md-7 mt20 nopad col-md-offset-1">
+             <div class="panel panel-primary p20 clearfix">
+                 
+             <label class="mr20">Station Name:</label> Pomona-Walnut Valley <br />
+              <label class="mr20">Current AQI: &nbsp;</label><span class="text-bold f18"> 57 (Moderate)
+                  <a href="#" class="tooltip2"> <i class="fa fa-question-circle "></i>
+                    <span>
+                         <img src="/aqdetail/Content/images/AQIValuesToolTip.gif" />
+                    </span>
+                  </a><label class="mr20"> &nbsp; </label> Fine Particulate Matter (PM2.5) - 24 Hr Average
+
+
+                  <br />
+                  </span>
+           
+                  <label class="mr20">Reading Date Time: &nbsp; &nbsp;07/16/2019 8:00pm Pacific Time (US &amp; Canada) </label>
+                 <br />
+             </div>
+            
+        </div>
+
+
+</div>
+
+
+
+    </div><!--end panel-->
+    <div  class="">
+         <span class="italic pull-right f09em pl20">Current Date and Time: 
+                    <script>
+                        var timestamp = new Date();
+                        document.write(timestamp);
+                    </script>
+  
+            </span>
+  </div>
+
+
+
+<form action="/aqdetail/AirQuality" method="post"><div id="currentWrapper" class="panel panel-default clearfix p20">
+  
+          <div id="currentTabContainer"  >
+      <div class="visible-xs hidden-md">Touch swift left or swift right to see more columns of the table.</div>
+
+             
+<div id="currentTable" class="data-table-container container-fluid table-responsive">   
+ 	<table class="table table-striped  table-bordered table-hover border" id="" cellspacing="0" cellpadding="0" border="0" >
+		<tbody>
+            <tr>
+			
+            <th scope="col" width="4%">Parameter</th>
+            <th scope="col" colspan="2" width="6%">AQI Value</th> 
+            <th scope="col" width="6%">AQI Description</th>
+            <th scope="col" width="10%">Averaging Period</th> 
+           
+            
+            <th scope="col" width="12%">Parameter Description</th>
+            <th scope="col" width="30%">Meaning</th>
+
+            </tr>
+             <tr >
+              <td class="">   PM<SUB>2.5</SUB>  </td>
+			    
+              
+             
+              <td style="border-right-color:transparent" class="">57</td>
+              <td style="border-left-color:transparent" class=""><div class="square-moderate"></div></td>
+                 <td class="">Moderate</td>
+                  <td class="">24-hr</td>
+              
+              
+              <td class="">Fine Particulate Matter</td>          
+              <td class="">Air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people. For example, people who are unusually sensitive to ozone may experience respiratory symptoms.</td>
+		     </tr>
+             <tr >
+              <td class="">   O<SUB>3</SUB>  </td>
+			    
+              
+             
+              <td style="border-right-color:transparent" class="">44</td>
+              <td style="border-left-color:transparent" class=""><div class="square-good"></div></td>
+                 <td class="">Good</td>
+                  <td class="">8-hr</td>
+              
+              
+              <td class="">Ozone</td>          
+              <td class="">Air quality is considered satisfactory, and air pollution poses little or no risk.</td>
+		     </tr>
+             <tr >
+              <td class="">   PM<SUB>10</SUB>  </td>
+			    
+              
+             
+              <td style="border-right-color:transparent" class="">38</td>
+              <td style="border-left-color:transparent" class=""><div class="square-good"></div></td>
+                 <td class="">Good</td>
+                  <td class="">24-hr</td>
+              
+              
+              <td class="">Particulate Matter</td>          
+              <td class="">Air quality is considered satisfactory, and air pollution poses little or no risk.</td>
+		     </tr>
+             <tr >
+              <td class="">   NO<SUB>2</SUB>  </td>
+			    
+              
+             
+              <td style="border-right-color:transparent" class="">5</td>
+              <td style="border-left-color:transparent" class=""><div class="square-good"></div></td>
+                 <td class="">Good</td>
+                  <td class="">24-hr</td>
+              
+              
+              <td class="">Nitrogen Dioxide</td>          
+              <td class="">Air quality is considered satisfactory, and air pollution poses little or no risk.</td>
+		     </tr>
+             <tr >
+              <td class="">   CO  </td>
+			    
+              
+             
+              <td style="border-right-color:transparent" class="">2</td>
+              <td style="border-left-color:transparent" class=""><div class="square-good"></div></td>
+                 <td class="">Good</td>
+                  <td class="">8-hr</td>
+              
+              
+              <td class="">Carbon Monoxide</td>          
+              <td class="">Air quality is considered satisfactory, and air pollution poses little or no risk.</td>
+		     </tr>
+	</tbody>
+
+</table>	
+
+        </div><!--end gridtable1-->
+
+               <div class="clearfix m20">
+                    <p>
+                        On May 15, 2008, AQMD began forecasting and reporting in the 8-hour ozone air quality standard, as adopted by the U.S. Environmental Protection Agency. The 1-hour standard reflects the more stringent state standard.
+                    </p>
+                    <p>Neighborhood air quality events, such as wildfires that create smoke, may not be reflected in the data presented. Users should note that AQMD data is updated on the hour. If conditions change during the hour, there may be a delay before the changes are reflected on the maps and in the data.</p>
+               </div>
+      </div><!--end of currentTabContainer-->
+  </div><!--end currentWrapper-->
+</form>
+ 
+  
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div id="hidefooter" class="btn btn-sm visible-xs">Hide Footer</div>
+        <div id="footersection">
+            <div class="section bg-blue pt20 pb20">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-7 col-xs-12 animated fadeInRight wow">
+                            <img src="/aqdetail/Content/images/aqmd-logo3.png" class="inline" width="60" alt="" />
+                            <div id="footeraddress" class="inlineblock text-white ">
+                                <strong>South Coast AQMD</strong><br>
+                                21865 Copley Dr, Diamond Bar, CA 91765<br>
+                                (909)-396-2000
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-2 col-sm-1 ">
+                        </div>
+                        <div class="col-md-4 col-sm-4 col-xs-12 animated fadeInUp wow">
+                            <ul class="footerlist">
+
+                                <li><a href="http://www.aqmd.gov/accessibility">Accessibility</a></li>
+                                <li><a href="http://www.aqmd.gov/sitemap">Sitemap</a></li>
+                                <li><a href="http://www.aqmd.gov/privacy">Privacy Policy</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-brightblue">
+                <div class="container">
+                    <div class="row mt20 mb20 text-white f08em">
+                        <div class="col-sm-7">
+                            <div class="pull-left">
+                                &copy; Copyright 2019 by South Coast Air Quality Management District
+                            </div>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="pull-right mr20">
+                                <a href="mailto:webeditor@aqmd.gov">Report Website Problem</a> | <a href="mailto:webinquiry@aqmd.gov">Questions/Need Info?</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div id="notifier"></div>
+    
+    <script src="/aqdetail/bundles/js?v=-GvqqsToGOp7iPCpywZMID9gnLmigPvZBksx_KEnooo1"></script>
+
+ 
+    <script type="text/javascript">
+        //For mobile for excute click event
+        var clickEventType = ((document.ontouchstart !== null) ? 'click' : 'touchstart mousedown');
+        $('body').on(clickEventType, 'button', function (e) { });
+        $.ajaxPrefilter(function (ajax) { if (!/^http/.test(ajax.url)) ajax.url = '/aqdetail/' + ajax.url; }); $.ajaxSetup({ cache: false });
+    </script>
+ 
+</body>
+</html>
