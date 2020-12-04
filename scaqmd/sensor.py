@@ -190,12 +190,15 @@ class CurrentAQI(AirQualityEntity):
 
     def parse_report_time(self, tree: BeautifulSoup):
         div = tree.find('div', attrs={'class': 'p20'})
-        time_label = div.find_all('label')[3].text.replace('\xa0', '')
-        time_label = time_label.split(': ')[1].lstrip()
-        time_label = time_label[:time_label.index('m')+1]
-        ts = datetime.datetime.strptime(time_label, '%m/%d/%Y %I:%M%p')
-        self._last_update = ts
-        self._next_update = ts + self._update_delay
+        for label in div.find_all('label'):
+            if 'Reading Date Time' in label.text:
+                time_label = label.text.split(': ')
+                if len(time_label) == 2:
+                    time_content = time_label[1]
+                    time_text = time_content[:time_content.index('m')+1].strip()
+                    ts = datetime.datetime.strptime(time_text, '%m/%d/%Y %I:%M%p')
+                    self._last_update = ts
+                    self._next_update = ts + self._update_delay
 
     @property
     def state_attributes(self):
